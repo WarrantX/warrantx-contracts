@@ -1,6 +1,8 @@
 #![no_std]
 
-use soroban_sdk::{contract, contracterror, contractimpl, contracttype, Address, BytesN, Env, IntoVal, Symbol, Vec};
+use soroban_sdk::{
+    contract, contracterror, contractimpl, contracttype, Address, BytesN, Env, IntoVal, Symbol, Vec,
+};
 
 #[contracterror]
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
@@ -24,29 +26,47 @@ pub struct FactoryContract;
 
 #[contractimpl]
 impl FactoryContract {
-    pub fn initialize(env: Env, admin: Address, treasury_wasm_hash: BytesN<32>) -> Result<(), FactoryError> {
+    pub fn initialize(
+        env: Env,
+        admin: Address,
+        treasury_wasm_hash: BytesN<32>,
+    ) -> Result<(), FactoryError> {
         if env.storage().instance().has(&DataKey::Admin) {
             return Err(FactoryError::AlreadyInitialized);
         }
         admin.require_auth();
 
         env.storage().instance().set(&DataKey::Admin, &admin);
-        env.storage().instance().set(&DataKey::TreasuryWasmHash, &treasury_wasm_hash);
+        env.storage()
+            .instance()
+            .set(&DataKey::TreasuryWasmHash, &treasury_wasm_hash);
 
         let treasuries: Vec<Address> = Vec::new(&env);
-        env.storage().instance().set(&DataKey::Treasuries, &treasuries);
+        env.storage()
+            .instance()
+            .set(&DataKey::Treasuries, &treasuries);
 
         Ok(())
     }
 
-    pub fn set_wasm_hash(env: Env, admin: Address, new_wasm_hash: BytesN<32>) -> Result<(), FactoryError> {
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).ok_or(FactoryError::NotInitialized)?;
+    pub fn set_wasm_hash(
+        env: Env,
+        admin: Address,
+        new_wasm_hash: BytesN<32>,
+    ) -> Result<(), FactoryError> {
+        let stored_admin: Address = env
+            .storage()
+            .instance()
+            .get(&DataKey::Admin)
+            .ok_or(FactoryError::NotInitialized)?;
         if stored_admin != admin {
             return Err(FactoryError::Unauthorized);
         }
         admin.require_auth();
 
-        env.storage().instance().set(&DataKey::TreasuryWasmHash, &new_wasm_hash);
+        env.storage()
+            .instance()
+            .set(&DataKey::TreasuryWasmHash, &new_wasm_hash);
         Ok(())
     }
 
@@ -65,7 +85,10 @@ impl FactoryContract {
             .get(&DataKey::TreasuryWasmHash)
             .ok_or(FactoryError::NotInitialized)?;
 
-        let treasury_address = env.deployer().with_current_contract(salt).deploy_v2(wasm_hash, ());
+        let treasury_address = env
+            .deployer()
+            .with_current_contract(salt)
+            .deploy_v2(wasm_hash, ());
 
         // Initialize deployed treasury
         let init_fn = Symbol::new(&env, "initialize");
@@ -76,9 +99,15 @@ impl FactoryContract {
 
         let _: () = env.invoke_contract(&treasury_address, &init_fn, init_args);
 
-        let mut treasuries: Vec<Address> = env.storage().instance().get(&DataKey::Treasuries).unwrap();
+        let mut treasuries: Vec<Address> = env
+            .storage()
+            .instance()
+            .get(&DataKey::Treasuries)
+            .ok_or(FactoryError::NotInitialized)?;
         treasuries.push_back(treasury_address.clone());
-        env.storage().instance().set(&DataKey::Treasuries, &treasuries);
+        env.storage()
+            .instance()
+            .set(&DataKey::Treasuries, &treasuries);
 
         Ok(treasury_address)
     }
