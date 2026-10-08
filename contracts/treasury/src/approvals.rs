@@ -1,4 +1,3 @@
-use crate::errors::ContractError;
 use crate::storage::DataKey;
 use soroban_sdk::{Address, Env};
 

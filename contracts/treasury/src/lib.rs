@@ -197,7 +197,7 @@ impl TreasuryContract {
         let policy = SpendingPolicy {
             policy_id: config.next_policy_id,
             spender: spender.clone(),
-            asset: config.asset,
+            asset: config.asset.clone(),
             spending_limit,
             period,
             approval_threshold,

@@ -105,7 +105,7 @@ fn test_policy_validation_and_identifier_increment() {
 
 #[test]
 fn test_deposit_and_balance() {
-    let (env, _admin, token_id, treasury_id, treasury_client, token_admin_client, token_client) =
+    let (env, _admin, _token_id, treasury_id, treasury_client, token_admin_client, token_client) =
         setup_test();
 
     let depositor = Address::generate(&env);
