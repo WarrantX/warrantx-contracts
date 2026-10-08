@@ -47,14 +47,3 @@ pub fn check_admin(env: &Env, caller: &Address) -> Result<(), ContractError> {
         Err(ContractError::Unauthorized)
     }
 }
-
-pub fn check_approver(env: &Env, caller: &Address) -> Result<(), ContractError> {
-    caller.require_auth();
-    let _config = check_active_treasury(env)?;
-    let member = check_active_member(env, caller)?;
-    if member.role == MemberRole::Approver || member.role == MemberRole::Admin {
-        Ok(())
-    } else {
-        Err(ContractError::Unauthorized)
-    }
-}

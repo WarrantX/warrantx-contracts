@@ -194,10 +194,7 @@ fn test_approval_workflow_for_payment_above_threshold() {
 
     // Approver 1 approves
     treasury_client.approve_payment(&approver1, &req_id);
-    assert_eq!(
-        treasury_client.has_approved_request(&req_id, &approver1),
-        true
-    );
+    assert!(treasury_client.has_approved_request(&req_id, &approver1));
 
     // Approver 2 approves -> request status becomes Approved
     treasury_client.approve_payment(&approver2, &req_id);

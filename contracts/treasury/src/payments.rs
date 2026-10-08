@@ -5,7 +5,7 @@ use crate::events::{
     emit_approval_revoked, emit_payment_approved, emit_payment_cancelled, emit_payment_executed,
     emit_payment_requested,
 };
-use crate::policies::{calculate_period_id, get_policy};
+use crate::policies::get_policy;
 use crate::storage::DataKey;
 use crate::types::{PaymentRequest, PaymentStatus, TreasuryConfig};
 use soroban_sdk::token::Client as TokenClient;
@@ -255,22 +255,14 @@ fn execute_payment_internal(
     }
 
     // Check approval threshold requirement
-    if request.amount > policy.approval_threshold {
-        if request.approval_count < policy.required_approvals {
-            return Err(ContractError::ApprovalThresholdNotMet);
-        }
+    if request.amount > policy.approval_threshold
+        && request.approval_count < policy.required_approvals
+    {
+        return Err(ContractError::ApprovalThresholdNotMet);
     }
 
     // Check and update recurring allowance
-    let period_id = calculate_period_id(now, &policy.period);
-    let current_spent = crate::allowances::get_spent_in_period(env, &request.spender, period_id);
-    let new_spent = current_spent
-        .checked_add(request.amount)
-        .ok_or(ContractError::Overflow)?;
-
-    if new_spent > policy.spending_limit {
-        return Err(ContractError::AllowanceExceeded);
-    }
+    crate::allowances::check_and_update_allowance(env, &request.spender, &policy, request.amount)?;
 
     // Verify treasury contract balance
     let token_client = TokenClient::new(env, &request.asset);
@@ -279,12 +271,6 @@ fn execute_payment_internal(
     if treasury_balance < request.amount {
         return Err(ContractError::InsufficientTreasuryBalance);
     }
-
-    // Update spending allowance record
-    env.storage().persistent().set(
-        &DataKey::Allowance(request.spender.clone(), period_id),
-        &new_spent,
-    );
 
     // Mark as executed in storage (Idempotency map)
     env.storage()
