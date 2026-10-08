@@ -45,7 +45,12 @@ pub fn emit_payment_requested(env: &Env, request_id: u64, spender: Address, amou
     env.events().publish(topics, amount);
 }
 
-pub fn emit_payment_approved(env: &Env, request_id: u64, approver: Address, current_approvals: u32) {
+pub fn emit_payment_approved(
+    env: &Env,
+    request_id: u64,
+    approver: Address,
+    current_approvals: u32,
+) {
     let topics = (symbol_short!("app_pay"), request_id, approver);
     env.events().publish(topics, current_approvals);
 }
@@ -55,7 +60,13 @@ pub fn emit_approval_revoked(env: &Env, request_id: u64, approver: Address) {
     env.events().publish(topics, ());
 }
 
-pub fn emit_payment_executed(env: &Env, request_id: u64, spender: Address, recipient: Address, amount: i128) {
+pub fn emit_payment_executed(
+    env: &Env,
+    request_id: u64,
+    spender: Address,
+    recipient: Address,
+    amount: i128,
+) {
     let topics = (symbol_short!("exec_pay"), request_id, spender);
     env.events().publish(topics, (recipient, amount));
 }

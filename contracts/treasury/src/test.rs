@@ -10,9 +10,9 @@ use soroban_sdk::{
 
 fn setup_test() -> (
     Env,
-    Address,        // Admin
-    Address,        // Asset/Token Contract Address
-    Address,        // Treasury Contract Address
+    Address, // Admin
+    Address, // Asset/Token Contract Address
+    Address, // Treasury Contract Address
     TreasuryContractClient<'static>,
     StellarAssetClient<'static>,
     TokenClient<'static>,
@@ -85,6 +85,25 @@ fn test_member_management() {
 }
 
 #[test]
+fn test_policy_validation_and_identifier_increment() {
+    let (env, admin, _, _, treasury_client, _, _) = setup_test();
+    let spender = Address::generate(&env);
+    let viewer = Address::generate(&env);
+    treasury_client.add_member(&admin, &spender, &MemberRole::Spender);
+    treasury_client.add_member(&admin, &viewer, &MemberRole::Viewer);
+
+    assert!(treasury_client
+        .try_set_policy(&admin, &viewer, &500, &SpendingPeriod::Daily, &200, &1, &0)
+        .is_err());
+    assert!(treasury_client
+        .try_set_policy(&admin, &spender, &500, &SpendingPeriod::Daily, &200, &0, &0)
+        .is_err());
+
+    treasury_client.set_policy(&admin, &spender, &500, &SpendingPeriod::Daily, &200, &1, &0);
+    assert_eq!(treasury_client.get_treasury_config().next_policy_id, 2);
+}
+
+#[test]
 fn test_deposit_and_balance() {
     let (env, _admin, token_id, treasury_id, treasury_client, token_admin_client, token_client) =
         setup_test();
@@ -110,10 +129,10 @@ fn test_auto_approval_payment_within_threshold() {
     treasury_client.set_policy(
         &admin,
         &spender,
-        &500,                  // spending limit
+        &500, // spending limit
         &SpendingPeriod::Daily,
-        &200,                  // approval threshold (<= 200 is auto-approved)
-        &1,                    // 1 approval required if > 200
+        &200, // approval threshold (<= 200 is auto-approved)
+        &1,   // 1 approval required if > 200
         &0,
     );
 
@@ -152,10 +171,10 @@ fn test_approval_workflow_for_payment_above_threshold() {
     treasury_client.set_policy(
         &admin,
         &spender,
-        &1000,                  // spending limit
+        &1000, // spending limit
         &SpendingPeriod::Monthly,
-        &200,                   // approval threshold
-        &2,                     // requires 2 approvals if > 200
+        &200, // approval threshold
+        &2,   // requires 2 approvals if > 200
         &0,
     );
 
@@ -175,7 +194,10 @@ fn test_approval_workflow_for_payment_above_threshold() {
 
     // Approver 1 approves
     treasury_client.approve_payment(&approver1, &req_id);
-    assert_eq!(treasury_client.has_approved_request(&req_id, &approver1), true);
+    assert_eq!(
+        treasury_client.has_approved_request(&req_id, &approver1),
+        true
+    );
 
     // Approver 2 approves -> request status becomes Approved
     treasury_client.approve_payment(&approver2, &req_id);
@@ -197,7 +219,8 @@ fn test_approval_workflow_for_payment_above_threshold() {
 
 #[test]
 fn test_spending_allowance_exceeded_rejection() {
-    let (env, admin, _token_id, _treasury_id, treasury_client, token_admin_client, _) = setup_test();
+    let (env, admin, _token_id, _treasury_id, treasury_client, token_admin_client, _) =
+        setup_test();
 
     let spender = Address::generate(&env);
     let recipient = Address::generate(&env);
@@ -206,9 +229,9 @@ fn test_spending_allowance_exceeded_rejection() {
     treasury_client.set_policy(
         &admin,
         &spender,
-        &300,                  // spending limit = 300
+        &300, // spending limit = 300
         &SpendingPeriod::Daily,
-        &1000,                 // threshold high so auto-executes if within limit
+        &1000, // threshold high so auto-executes if within limit
         &0,
         &0,
     );
@@ -230,7 +253,8 @@ fn test_spending_allowance_exceeded_rejection() {
 
 #[test]
 fn test_recurring_period_rollover() {
-    let (env, admin, _token_id, _treasury_id, treasury_client, token_admin_client, _) = setup_test();
+    let (env, admin, _token_id, _treasury_id, treasury_client, token_admin_client, _) =
+        setup_test();
 
     let spender = Address::generate(&env);
     let recipient = Address::generate(&env);
@@ -239,7 +263,7 @@ fn test_recurring_period_rollover() {
     treasury_client.set_policy(
         &admin,
         &spender,
-        &500,                  // limit 500 daily
+        &500, // limit 500 daily
         &SpendingPeriod::Daily,
         &500,
         &0,
@@ -269,7 +293,8 @@ fn test_recurring_period_rollover() {
 
 #[test]
 fn test_stale_policy_version_invalidation() {
-    let (env, admin, _token_id, _treasury_id, treasury_client, token_admin_client, _) = setup_test();
+    let (env, admin, _token_id, _treasury_id, treasury_client, token_admin_client, _) =
+        setup_test();
 
     let spender = Address::generate(&env);
     let approver = Address::generate(&env);

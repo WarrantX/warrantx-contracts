@@ -188,11 +188,7 @@ pub fn revoke_approval_request(
     Ok(())
 }
 
-pub fn cancel_request(
-    env: &Env,
-    caller: &Address,
-    request_id: u64,
-) -> Result<(), ContractError> {
+pub fn cancel_request(env: &Env, caller: &Address, request_id: u64) -> Result<(), ContractError> {
     caller.require_auth();
     let mut request = get_request(env, request_id)?;
 
@@ -201,7 +197,9 @@ pub fn cancel_request(
     }
 
     let caller_member = check_active_member(env, caller)?;
-    if caller_member.address != request.spender && caller_member.role != crate::types::MemberRole::Admin {
+    if caller_member.address != request.spender
+        && caller_member.role != crate::types::MemberRole::Admin
+    {
         return Err(ContractError::Unauthorized);
     }
 
@@ -283,9 +281,10 @@ fn execute_payment_internal(
     }
 
     // Update spending allowance record
-    env.storage()
-        .persistent()
-        .set(&DataKey::Allowance(request.spender.clone(), period_id), &new_spent);
+    env.storage().persistent().set(
+        &DataKey::Allowance(request.spender.clone(), period_id),
+        &new_spent,
+    );
 
     // Mark as executed in storage (Idempotency map)
     env.storage()

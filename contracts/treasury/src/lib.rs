@@ -148,11 +148,7 @@ impl TreasuryContract {
         Ok(())
     }
 
-    pub fn suspend_member(
-        env: Env,
-        admin: Address,
-        member: Address,
-    ) -> Result<(), ContractError> {
+    pub fn suspend_member(env: Env, admin: Address, member: Address) -> Result<(), ContractError> {
         check_admin(&env, &admin)?;
         let mut member_info = get_member(&env, &member)?;
         member_info.status = MemberStatus::Suspended;
@@ -176,11 +172,20 @@ impl TreasuryContract {
         expires_at: u64,
     ) -> Result<u32, ContractError> {
         check_admin(&env, &admin)?;
-        let config = check_active_treasury(&env)?;
-        let _spender_member = check_active_member(&env, &spender)?;
+        let mut config = check_active_treasury(&env)?;
+        let spender_member = check_active_member(&env, &spender)?;
 
+        if spender_member.role != MemberRole::Spender {
+            return Err(ContractError::InvalidRole);
+        }
         if spending_limit <= 0 || approval_threshold <= 0 {
             return Err(ContractError::InvalidAmount);
+        }
+        if required_approvals == 0 && approval_threshold < spending_limit {
+            return Err(ContractError::ApprovalThresholdNotMet);
+        }
+        if expires_at != 0 && expires_at <= env.ledger().timestamp() {
+            return Err(ContractError::RequestExpired);
         }
 
         let existing_policy = policies::get_policy(&env, &spender).ok();
@@ -206,6 +211,12 @@ impl TreasuryContract {
         env.storage()
             .persistent()
             .set(&DataKey::Policy(spender.clone()), &policy);
+
+        config.next_policy_id = config
+            .next_policy_id
+            .checked_add(1)
+            .ok_or(ContractError::Overflow)?;
+        env.storage().instance().set(&DataKey::Config, &config);
 
         emit_policy_updated(&env, spender, new_version, spending_limit);
         Ok(new_version)
@@ -258,11 +269,7 @@ impl TreasuryContract {
         payments::revoke_approval_request(&env, &approver, request_id)
     }
 
-    pub fn cancel_payment(
-        env: Env,
-        caller: Address,
-        request_id: u64,
-    ) -> Result<(), ContractError> {
+    pub fn cancel_payment(env: Env, caller: Address, request_id: u64) -> Result<(), ContractError> {
         payments::cancel_request(&env, &caller, request_id)
     }
 
