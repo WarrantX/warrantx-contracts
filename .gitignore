@@ -1,0 +1,6 @@
+/target/
+.env
+deployments/*.local.json
+*.log
+.DS_Store
+

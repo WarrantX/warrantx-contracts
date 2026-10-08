@@ -1,0 +1,18 @@
+[workspace]
+resolver = "2"
+members = [
+    "contracts/treasury",
+    "contracts/factory",
+]
+
+[workspace.dependencies]
+soroban-sdk = "22.0.0"
+
+[profile.release]
+opt-level = "z"
+overflow-checks = true
+debug = false
+strip = "symbols"
+debug-assertions = false
+panic = "abort"
+codegen-units = 1
