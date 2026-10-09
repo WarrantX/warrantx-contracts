@@ -4,9 +4,11 @@
 [![Stellar](https://img.shields.io/badge/Stellar-Soroban-black)](https://stellar.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
+[Live application](https://warrantx-app.vercel.app) · [Documentation](https://entity-6.gitbook.io/warrantx-documentation) · [Testnet contract](https://stellar.expert/explorer/testnet/contract/CATX47HYXQMHZALH3HYM6JKILXYGPVU324RKQZBPKEJH7TOVAEPMYT2R)
+
 WarrantX is an open-source policy engine for Stellar treasuries. Its Soroban contracts enforce member roles, recurring spending limits, approval thresholds, policy versioning, and token transfers. This repository contains the treasury contract and its deployment factory; the companion `warrantx-app` repository provides the dashboard, API, indexer, and TypeScript SDK.
 
-> **Release status:** v0.1 is a testnet-ready preview. The contracts are unaudited. Do not use this release to custody material mainnet funds.
+> **Release status:** v0.1.1 is a testnet-only preview. The contracts are unaudited. Do not use this release to custody material mainnet funds.
 
 ## Contract architecture
 
@@ -55,4 +57,3 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md). By partic
 ## License
 
 MIT. See [LICENSE](LICENSE).
-
